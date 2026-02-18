@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DLX Sudoku Solver</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 30px 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 8px;
+            font-size: 2.8em;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.85);
+            margin-bottom: 35px;
+            font-size: 1em;
+            font-weight: 400;
+            letter-spacing: 0.3px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 28px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+            backdrop-filter: blur(10px);
+        }
+
+        .card h2 {
+            font-size: 1.4em;
+            margin-bottom: 18px;
+            color: #333;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card h2 span {
+            font-size: 1.3em;
+        }
+
+        /* Grid styles */
+        .grid-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(9, 48px);
+            gap: 0;
+            border: 3px solid #1a1a1a;
+            background: #1a1a1a;
+            border-radius: 2px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        input {
+            width: 48px;
+            height: 48px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: 700;
+            border: 1px solid #e0e0e0;
+            background: white;
+            color: #333;
+            transition: all 0.15s ease;
+        }
+
+        input:hover {
+            background: #f8f9ff;
+        }
+
+        input:focus {
+            outline: none;
+            background: #f0f4ff;
+            border: 2px solid #667eea;
+            box-shadow: 0 0 8px rgba(102, 126, 234, 0.2);
+        }
+
+        /* 3x3 box borders */
+        input:nth-child(3n) {
+            border-right: 2px solid #1a1a1a;
+        }
+        input:nth-child(n + 19):nth-child(-n + 27),
+        input:nth-child(n + 55):nth-child(-n + 63) {
+            border-bottom: 2px solid #1a1a1a;
+        }
+
+        .input-muted { 
+            opacity: 0.25;
+            background: #f5f5f5;
+        }
+
+        .input-highlight { 
+            box-shadow: inset 0 0 10px rgba(79, 70, 229, 0.5);
+            background: #fff9e6;
+            border-color: #f59e0b;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .control-group.full {
+            width: 100%;
+        }
+
+        select {
+            padding: 12px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            flex: 1;
+            min-width: 150px;
+            transition: all 0.2s ease;
+            background: white;
+            color: #333;
+        }
+
+        select:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            padding: 12px 18px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            flex: 1;
+            min-width: 110px;
+            letter-spacing: 0.3px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        #solveBtn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        #solveBtn:hover {
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        #solveVizBtn {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
+        #solveVizBtn:hover {
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3);
+        }
+
+        #pauseBtn {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        #pauseBtn:hover {
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+        }
+
+        #stepBtn {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+        }
+
+        #stepBtn:hover {
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.3);
+        }
+
+        .clear-btn {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            color: white;
+        }
+
+        .clear-btn:hover {
+            box-shadow: 0 6px 20px rgba(107, 114, 128, 0.3);
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+            border-radius: 8px;
+        }
+
+        .speed-control label {
+            font-weight: 600;
+            color: #667eea;
+            min-width: 50px;
+            font-size: 13px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #e0e0e0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #764ba2;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.5);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+        }
+
+        input[type="range"]::-moz-range-thumb:hover {
+            background: #764ba2;
+        }
+
+        /* Stats */
+        .stats {
+            margin-top: 12px;
+            padding: 14px 16px;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.7;
+            border-left: 4px solid #667eea;
+            display: none;
+        }
+
+        .stats.show {
+            display: block;
+        }
+
+        #metrics {
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            background: linear-gradient(135deg, #f9f5ff 0%, #f3e8ff 100%);
+            border-left-color: #8b5cf6;
+        }
+
+        /* Columns visualization */
+        #columns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            padding: 14px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-top: 14px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .col-box {
+            width: 15px;
+            height: 15px;
+            background: #d1d5db;
+            border-radius: 3px;
+            transition: all 0.1s ease;
+            cursor: default;
+        }
+
+        .col-box:hover {
+            transform: scale(1.15);
+        }
+
+        .col-selected { 
+            background: #f59e0b !important;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
+        }
+
+        .col-covered { 
+            background: #ef4444 !important;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+        }
+
+        /* Log */
+        #log {
+            max-height: 240px;
+            overflow-y: auto;
+            padding: 14px;
+            background: #1f2937;
+            color: #10b981;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            border-radius: 8px;
+            line-height: 1.6;
+            border: 1px solid #374151;
+        }
+
+        #log div {
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* Complexity section */
+        .complexity-section {
+            background: white;
+            border-radius: 14px;
+            padding: 28px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+            margin-bottom: 30px;
+        }
+
+        .complexity-section h2 {
+            font-size: 1.6em;
+            color: #333;
+            margin-bottom: 24px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .complexity-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .complexity-box {
+            background: linear-gradient(135deg, #667eea08 0%, #764ba208 100%);
+            padding: 22px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            border: 1px solid #e5e7eb;
+            border-left: 4px solid #667eea;
+        }
+
+        .complexity-box h3 {
+            color: #667eea;
+            margin-bottom: 12px;
+            font-size: 1.15em;
+            font-weight: 600;
+        }
+
+        .complexity-box p {
+            color: #555;
+            line-height: 1.7;
+            font-size: 0.95em;
+        }
+
+        /* Complexity table styles */
+        .complexity-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .complexity-table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .complexity-table th {
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.95em;
+            letter-spacing: 0.3px;
+        }
+
+        .complexity-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .complexity-table tbody tr:hover {
+            background: #f9f5ff;
+        }
+
+        .complexity-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .op-name {
+            font-weight: 600;
+            color: #333;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.85em;
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+
+        .op-complexity {
+            font-family: 'Monaco', 'Courier New', monospace;
+            color: #667eea;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .op-description {
+            color: #666;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+
+        .complexity-details {
+            background: linear-gradient(135deg, #f9f5ff 0%, #f3e8ff 100%);
+            padding: 18px;
+            border-radius: 10px;
+            font-size: 0.9em;
+            line-height: 1.8;
+            color: #555;
+            border: 1px solid #e9d5ff;
+            margin-top: 20px;
+        }
+
+        .complexity-details strong {
+            color: #667eea;
+        }
+
+        .complexity-details ul {
+            margin-left: 20px;
+            margin-top: 8px;
+        }
+
+        .complexity-details li {
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 900px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .complexity-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .complexity-table {
+                font-size: 0.85em;
+            }
+
+            .complexity-table th,
+            .complexity-table td {
+                padding: 10px 12px;
+            }
+
+            h1 {
+                font-size: 2.2em;
+            }
+
+            .control-group {
+                flex-direction: column;
+            }
+
+            button, select {
+                width: 100%;
+            }
+
+            .grid {
+                grid-template-columns: repeat(9, 40px);
+            }
+
+            input {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+        }
+
+        /* Scrollbar styling */
+        #log::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #log::-webkit-scrollbar-track {
+            background: #374151;
+            border-radius: 3px;
+        }
+
+        #log::-webkit-scrollbar-thumb {
+            background: #10b981;
+            border-radius: 3px;
+        }
+
+        #log::-webkit-scrollbar-thumb:hover {
+            background: #059669;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🧩 Sudoku Solver</h1>
+    <p class="subtitle">Dancing Links (DLX) with Algorithm X</p>
+
+    <div class="main-grid">
+        <!-- Left Column: Grid & Controls -->
+        <div>
+            <div class="card">
+                <h2><span>📋</span> Puzzle</h2>
+                <div class="grid-container">
+                    <div class="grid" id="sudokuGrid"></div>
+                </div>
+
+                <div class="controls">
+                    <div class="control-group full">
+                        <select id="sampleSelect">
+                            <option value="">Select difficulty level...</option>
+                            <option value="easy">Easy</option>
+                            <option value="hard">Hard</option>
+                            <option value="expert">Expert</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <button id="solveBtn">⚡ Solve (Fast)</button>
+                        <button id="solveVizBtn">👁️ Visualize</button>
+                    </div>
+
+                    <div class="control-group">
+                        <button id="pauseBtn">⏸️ Pause</button>
+                        <button id="stepBtn">⏭️ Step</button>
+                        <button class="clear-btn" onclick="clearGrid()">🗑️ Clear</button>
+                    </div>
+
+                    <div class="speed-control">
+                        <label for="speedRange">Speed:</label>
+                        <input type="range" id="speedRange" min="10" max="500" value="50">
+                    </div>
+                </div>
+
+                <div id="stats" class="stats"></div>
+                <div id="metrics" class="stats"></div>
+            </div>
+        </div>
+
+        <!-- Right Column: Visualization & Logs -->
+        <div>
+            <div class="card">
+                <h2><span>🔬</span> Algorithm Visualization</h2>
+                <p style="margin-bottom: 14px; color: #666; font-size: 0.9em; font-weight: 500;">
+                    Constraint columns (324) 
+                </p>
+                <p style="margin-bottom: 14px; color: #888; font-size: 0.85em;">
+                    <span style="display: inline-flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; background: #f59e0b; border-radius: 2px;"></span>Selected</span>
+                    <span style="display: inline-flex; align-items: center; gap: 6px; margin-left: 12px;"><span style="width: 12px; height: 12px; background: #ef4444; border-radius: 2px;"></span>Covered</span>
+                </p>
+                <div id="columns" title="constraint columns (324)"></div>
+
+                <h2 style="margin-top: 22px;"><span>📝</span> Execution Log</h2>
+                <div id="log"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Complexity Analysis -->
+    <div class="complexity-section">
+        <h2><span>📊</span> Complexity Analysis</h2>
+        
+        <div class="complexity-grid">
+            <div class="complexity-box">
+                <h3>⏱️ Time Complexity</h3>
+                <p><strong>Worst-case:</strong> Exponential O(b<sup>d</sup>)</p>
+                <p style="margin-top: 10px; font-size: 0.9em;">
+                    Algorithm X explores a backtracking search tree with depth ≈ O(N²) for an N×N Sudoku and branching factor up to O(N). Theoretically exponential, but DLX with the minimum-column heuristic provides dramatic practical speedup through early pruning.
+                </p>
+            </div>
+
+            <div class="complexity-box">
+                <h3>💾 Space Complexity</h3>
+                <p><strong>Linear:</strong> O(N³) nodes</p>
+                <p style="margin-top: 10px; font-size: 0.9em;">
+                    DLX maintains one node per '1' in the sparse exact-cover matrix. For Sudoku, each candidate generates 4 ones, resulting in O(N³) total nodes (for 9×9, this is ~2,700 nodes).
+                </p>
+            </div>
+        </div>
+
+        <table class="complexity-table">
+            <thead>
+                <tr>
+                    <th style="width: 40%;">Operation</th>
+                    <th style="width: 30%;">Complexity</th>
+                    <th style="width: 30%;">Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="op-name">DLX Setup</td>
+                    <td class="op-complexity">O(N²)</td>
+                    <td class="op-description">Initialize DLX structure with N² nodes.</td>
+                </tr>
+                <tr>
+                    <td class="op-name">Cover/Uncover</td>
+                    <td class="op-complexity">O(1)</td>
+                    <td class="op-description">DLX's Dancing Links allows constant-time cover/uncover.</td>
+                </tr>
+                <tr>
+                    <td class="op-name">Search</td>
+                    <td class="op-complexity">O(b<sup>d</sup>)</td>
+                    <td class="op-description">Depth-first search with branching factor b and depth d.</td>
+                </tr>
+                <tr>
+                    <td class="op-name">Backtrack</td>
+                    <td class="op-complexity">O(b<sup>d</sup>)</td>
+                    <td class="op-description">Backtrack to previous state, exploring alternative solutions.</td>
+                </tr>
+                <tr>
+                    <td class="op-name">Node Creation</td>
+                    <td class="op-complexity">O(1)</td>
+                    <td class="op-description">Each node allocation is constant time.</td>
+                </tr>
+                <tr>
+                    <td class="op-name">Memory Usage</td>
+                    <td class="op-complexity">O(N³)</td>
+                    <td class="op-description">Memory used by DLX scales with the cube of N.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="complexity-details">
+            <strong>Key Insights:</strong><br>
+            • Sudoku as Exact Cover: 729 candidate placements, 324 constraints (81 cells + 81 rows + 81 columns + 81 boxes)<br>
+            • Dancing Links O(1) Cover/Uncover: Doubly-linked toroidal structure allows constant-time pointer manipulation<br>
+            • Minimum-Column Heuristic: Chooses the column with fewest rows, exponentially reducing search space<br>
+            • NP-Complete Problem: Exact Cover is NP-Complete; no known polynomial algorithm, but DLX is one of the fastest practical solvers
+        </div>
+    </div>
+</div>
+
+<script>
+const SIZE = 9;
+let recursiveCalls = 0;
+let solutionRows = [];
+let startTime;
+
+/* ------------------ CREATE GRID ------------------ */
+
+function createGrid() {
+    const grid = document.getElementById("sudokuGrid");
+    for (let i = 0; i < SIZE * SIZE; i++) {
+        const input = document.createElement("input");
+        input.type = "text";
+        input.maxLength = 1;
+        input.dataset.index = i;
+        input.inputMode = "numeric";
+        grid.appendChild(input);
+    }
+}
+
+createGrid();
+
+/* ------------------ DLX STRUCTURE ------------------ */
+
+// Visualization & control flags
+let visualize = false;
+let paused = false;
+let stepResolve = null;
+let speed = 50;
+
+// Metrics
+let nodesVisited = 0;
+let columnBoxes = [];
+let columns = [];
+
+class Node {
+    constructor() {
+        this.left = this;
+        this.right = this;
+        this.up = this;
+        this.down = this;
+        this.column = null;
+    }
+}
+
+class ColumnNode extends Node {
+    constructor(name) {
+        super();
+        this.name = name;
+        this.size = 0;
+    }
+}
+
+let header = new ColumnNode("header");
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function muteInputAt(idx) {
+    const inp = document.querySelectorAll('input')[idx];
+    if (!inp) return;
+    let c = parseInt(inp.dataset.muted || '0', 10);
+    c++;
+    inp.dataset.muted = c;
+    if (c === 1) inp.classList.add('input-muted');
+}
+
+function unmuteInputAt(idx) {
+    const inp = document.querySelectorAll('input')[idx];
+    if (!inp) return;
+    let c = parseInt(inp.dataset.muted || '0', 10);
+    c = Math.max(0, c - 1);
+    inp.dataset.muted = c;
+    if (c === 0) inp.classList.remove('input-muted');
+}
+
+async function maybePause() {
+    while (paused && !stepResolve) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+    }
+    if (stepResolve) {
+        const r = stepResolve;
+        stepResolve = null;
+        r();
+    }
+}
+
+/* ------------------ BUILD EXACT COVER ------------------ */
+
+function buildDLX(board) {
+    header = new ColumnNode("header");
+    columns = [];
+
+    for (let i = 0; i < 324; i++) {
+        let col = new ColumnNode(i);
+        columns.push(col);
+        col.right = header;
+        col.left = header.left || header;
+        header.left = col;
+        col.left.right = col;
+    }
+
+    for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+            for (let n = 1; n <= 9; n++) {
+
+                if (board[r][c] !== 0 && board[r][c] !== n) continue;
+
+                let rowNodes = [];
+
+                let cell = r * 9 + c;
+                let row = 81 + r * 9 + (n - 1);
+                let col = 162 + c * 9 + (n - 1);
+                let box = 243 + (Math.floor(r / 3) * 3 + Math.floor(c / 3)) * 9 + (n - 1);
+
+                let cols = [cell, row, col, box];
+
+                for (let colIndex of cols) {
+                    let newNode = new Node();
+                    let column = columns[colIndex];
+                    newNode.column = column;
+
+                    newNode.down = column;
+                    newNode.up = column.up;
+                    column.up.down = newNode;
+                    column.up = newNode;
+                    column.size++;
+
+                    newNode.rowID = { r, c, n };
+                    rowNodes.push(newNode);
+                }
+
+                for (let i = 0; i < rowNodes.length; i++) {
+                    rowNodes[i].right = rowNodes[(i + 1) % rowNodes.length];
+                    rowNodes[i].left = rowNodes[(i + rowNodes.length - 1) % rowNodes.length];
+                }
+            }
+        }
+    }
+
+    createColumnsDOM();
+}
+
+function createColumnsDOM() {
+    const container = document.getElementById('columns');
+    container.innerHTML = '';
+    columnBoxes = [];
+    for (let i = 0; i < 324; i++) {
+        const d = document.createElement('div');
+        d.className = 'col-box';
+        d.dataset.index = i;
+        container.appendChild(d);
+        columnBoxes.push(d);
+    }
+}
+
+/* ------------------ COVER / UNCOVER ------------------ */
+
+function cover(column) {
+    column.right.left = column.left;
+    column.left.right = column.right;
+
+    if (columnBoxes[column.name]) columnBoxes[column.name].classList.add('col-covered');
+
+    for (let row = column.down; row !== column; row = row.down) {
+        for (let node = row.right; node !== row; node = node.right) {
+            node.down.up = node.up;
+            node.up.down = node.down;
+            node.column.size--;
+            if (node.rowID) {
+                const idx = node.rowID.r * 9 + node.rowID.c;
+                muteInputAt(idx);
+            }
+        }
+    }
+}
+
+function uncover(column) {
+    for (let row = column.up; row !== column; row = row.up) {
+        for (let node = row.left; node !== row; node = node.left) {
+            node.column.size++;
+            node.down.up = node;
+            node.up.down = node;
+            if (node.rowID) {
+                const idx = node.rowID.r * 9 + node.rowID.c;
+                unmuteInputAt(idx);
+            }
+        }
+    }
+    column.right.left = column;
+    column.left.right = column;
+    if (columnBoxes[column.name]) columnBoxes[column.name].classList.remove('col-covered');
+}
+
+/* ------------------ ALGORITHM X ------------------ */
+
+async function chooseColumn() {
+    let best = null;
+    for (let c = header.right; c !== header; c = c.right) {
+        if (!best || c.size < best.size) best = c;
+    }
+    return best;
+}
+
+async function search(k) {
+    recursiveCalls++;
+
+    if (visualize) {
+        await maybePause();
+        await sleep(speed);
+        updateMetrics();
+    }
+
+    if (header.right === header) {
+        return true;
+    }
+
+    let column = await chooseColumn();
+    if (!column) return false;
+
+    if (columnBoxes[column.name]) {
+        columnBoxes.forEach(b => b.classList.remove('col-selected'));
+        columnBoxes[column.name].classList.add('col-selected');
+    }
+
+    log('Select column ' + column.name + ' (size=' + column.size + ')');
+
+    cover(column);
+
+    for (let row = column.down; row !== column; row = row.down) {
+        nodesVisited++;
+        if (row.rowID) log(' Try row r=' + row.rowID.r + ' c=' + row.rowID.c + ' n=' + row.rowID.n);
+        solutionRows.push(row);
+
+        if (row.rowID) {
+            const idx = row.rowID.r * 9 + row.rowID.c;
+            document.querySelectorAll('input')[idx].classList.add('input-highlight');
+        }
+
+        for (let node = row.right; node !== row; node = node.right) {
+            cover(node.column);
+        }
+
+        if (await search(k + 1)) return true;
+
+        if (row.rowID) log(' Backtrack row r=' + row.rowID.r + ' c=' + row.rowID.c + ' n=' + row.rowID.n);
+        solutionRows.pop();
+        for (let node = row.left; node !== row; node = node.left) {
+            uncover(node.column);
+        }
+
+        if (row.rowID) {
+            const idx = row.rowID.r * 9 + row.rowID.c;
+            document.querySelectorAll('input')[idx].classList.remove('input-highlight');
+        }
+        if (visualize) { await sleep(speed); }
+    }
+
+    uncover(column);
+    if (columnBoxes[column.name]) columnBoxes[column.name].classList.remove('col-selected');
+    return false;
+}
+
+/* ------------------ SOLVER ------------------ */
+
+async function solveFast() {
+    visualize = false;
+    recursiveCalls = 0;
+    nodesVisited = 0;
+    solutionRows = [];
+    clearLog();
+
+    const board = getBoard();
+    buildDLX(board);
+
+    startTime = performance.now();
+    let res = await search(0);
+    let endTime = performance.now();
+
+    fillSolution();
+    document.getElementById("stats").classList.add('show');
+    document.getElementById("stats").innerHTML =
+        "✅ <strong>Solved!</strong><br>" +
+        "⏱️ Time: " + (endTime - startTime).toFixed(2) + " ms<br>" +
+        "📞 Recursive Calls: " + recursiveCalls;
+    document.getElementById("metrics").classList.add('show');
+    updateMetrics();
+}
+
+async function solveVisual() {
+    visualize = true;
+    paused = false;
+    recursiveCalls = 0;
+    nodesVisited = 0;
+    solutionRows = [];
+    clearLog();
+
+    const board = getBoard();
+    buildDLX(board);
+
+    const sp = document.getElementById('speedRange').value;
+    speed = parseInt(sp, 10);
+
+    startTime = performance.now();
+    let found = await search(0);
+    let endTime = performance.now();
+
+    if (found) fillSolution();
+    document.getElementById("stats").classList.add('show');
+    document.getElementById("stats").innerHTML =
+        "✅ <strong>Solved!</strong><br>" +
+        "⏱️ Time: " + (endTime - startTime).toFixed(2) + " ms<br>" +
+        "📞 Recursive Calls: " + recursiveCalls;
+    document.getElementById("metrics").classList.add('show');
+    updateMetrics();
+}
+
+function getBoard() {
+    const inputs = document.querySelectorAll("input");
+    let board = [];
+    for (let r = 0; r < 9; r++) {
+        board[r] = [];
+        for (let c = 0; c < 9; c++) {
+            let val = inputs[r * 9 + c].value;
+            board[r][c] = val === "" ? 0 : parseInt(val);
+        }
+    }
+    return board;
+}
+
+function fillSolution() {
+    for (let row of solutionRows) {
+        let { r, c, n } = row.rowID;
+        document.querySelectorAll("input")[r * 9 + c].value = n;
+    }
+}
+
+function clearGrid() {
+    document.querySelectorAll("input").forEach(i => {
+        i.value = "";
+        i.className = "";
+        i.dataset.muted = "0";
+    });
+    document.getElementById("stats").classList.remove('show');
+    document.getElementById("metrics").classList.remove('show');
+    document.getElementById('sampleSelect').value = '';
+    clearLog();
+    columnBoxes.forEach(b => b.className = 'col-box');
+}
+
+function updateMetrics() {
+    document.getElementById('metrics').innerHTML =
+        '📊 Recursive calls: ' + recursiveCalls + '<br>' +
+        '🔍 Nodes visited: ' + nodesVisited + '<br>' +
+        '⚙️ DLX columns: 324';
+}
+
+function log(msg) {
+    const l = document.getElementById('log');
+    const p = document.createElement('div');
+    p.textContent = msg;
+    l.appendChild(p);
+    l.scrollTop = l.scrollHeight;
+}
+
+function clearLog() {
+    document.getElementById('log').innerHTML = '';
+}
+
+// sample puzzles (0 = empty)
+const SAMPLES = {
+    easy: [
+        "530070000","600195000","098000060","800060003","400803001","700020006","060000280","000419005","000080079"
+    ],
+    hard: [
+        "000000907","000420180","000705026","100904000","050000040","000507009","920108000","034059000","507000000"
+    ],
+    expert: [
+        "....."
+    ]
+};
+
+function loadSample(name) {
+    const inputs = document.querySelectorAll('input');
+    if (!SAMPLES[name]) return;
+    const rows = SAMPLES[name];
+    for (let r = 0; r < 9; r++) {
+        const rowStr = (rows[r] || '').replace(/\./g, '0');
+        for (let c = 0; c < 9; c++) {
+            const ch = rowStr[c] || '0';
+            inputs[r*9 + c].value = ch === '0' ? '' : ch;
+        }
+    }
+}
+
+// wire controls
+document.getElementById('sampleSelect').addEventListener('change', () => {
+    const s = document.getElementById('sampleSelect').value;
+    if (s) {
+        clearGrid();
+        loadSample(s);
+    }
+});
+document.getElementById('solveBtn').addEventListener('click', () => { solveFast(); });
+document.getElementById('solveVizBtn').addEventListener('click', () => { solveVisual(); });
+document.getElementById('pauseBtn').addEventListener('click', () => { 
+    paused = !paused; 
+    document.getElementById('pauseBtn').textContent = paused ? '⏯️ Resume' : '⏸️ Pause'; 
+});
+document.getElementById('stepBtn').addEventListener('click', () => {
+    if (!paused) paused = true;
+    if (!stepResolve) stepResolve = () => {};
+});
+document.getElementById('speedRange').addEventListener('input', (e) => { speed = parseInt(e.target.value, 10); });
+
+updateMetrics();
+</script>
+
+</body>
+</html>
