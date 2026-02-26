@@ -1,6 +1,6 @@
 # 🧩 Sudoku Solver - Dancing Links (DLX) Algorithm
 
-A high-performance, educational Sudoku solver built with the **Dancing Links (DLX)** algorithm implementing **Algorithm X**. This interactive web-based tool visualizes the exact-cover problem-solving process in real-time.
+A high-performance, Sudoku solver built with the **Dancing Links (DLX)** algorithm implementing **Algorithm X**. This interactive web-based tool visualizes the exact-cover problem-solving process in real-time.
 
 ## ✨ Features
 
@@ -10,7 +10,6 @@ A high-performance, educational Sudoku solver built with the **Dancing Links (DL
 - **🎮 Interactive Controls**: Play, pause, step through, and adjust visualization speed
 - **📋 Sample Puzzles**: Three difficulty levels (Easy, Hard, Expert) to test
 - **🔬 Algorithm Transparency**: See exactly which constraints are covered/uncovered and how the search tree is explored
-- **📚 Educational**: Detailed complexity analysis and explanations of the DLX algorithm
 
 ## 🚀 Getting Started
 
@@ -95,7 +94,7 @@ This makes the algorithm practical despite the exponential worst-case complexity
 
 ### Key Insights
 
-- **Theoretical**: Exact Cover is NP-Complete; no polynomial algorithm known
+- **Theoretical**: Exact Cover is Non P-Complete; no polynomial algorithm known
 - **Practical**: Minimum-column heuristic exponentially prunes the search tree
 - **DLX**: Constant-time pointer operations make the algorithm fast in practice
 - **Most puzzles**: Solve in <50ms despite exponential worst-case
